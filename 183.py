@@ -9,27 +9,27 @@ class Solution:
     @param k: An integer
     @return: The maximum length of the small pieces
     """
-    def wood_cut(self, l: List[int], k: int) -> int:
-        if not l: return 0
-        start = 1
-        end = max(l)
+    def wood_cut(self, woods: List[int], k: int) -> int:
+        if k == 0: return max(woods)
+        if not woods: return 0
 
+        start, end = 1, max(woods)
         while start + 1 < end:
-            mid = start + (end - start) // 2
-            if self.can_chop(l, mid, k):
+            mid = (start + end) // 2
+            if self.check_valid(mid, woods, k):
                 start = mid
             else:
                 end = mid
-
-        if self.can_chop(l, end, k): return end
-        if self.can_chop(l, start, k): return start
+        
+        if self.check_valid(end, woods, k): return end
+        if self.check_valid(start, woods, k): return start
         return 0
     
-    def can_chop(self, l, target, k):
-        number = 0
+    def check_valid(self, length, woods, k):
+        segment = 0
 
-        for wood_length in l:
-            number += wood_length // target
-            if number >= k: return True
+        for wood in woods:
+            segment += wood // length
+            if segment >= k:
+                return True
         return False
-

@@ -2,68 +2,76 @@
 线段树
 ###
 
-class TreeNode:
-    def __init__(self, start, end, val):
-        self.start, self.end = start, end
-        self.left, self.right = None, None
-        self.sum = val
-
 class SegmentTree:
+    class TreeNode:
+        def __init__(self, start, end, val):
+            self.start, self.end = start, end
+            self.left, self.right = None, None
+            self.val = val
+    
     def __init__(self, nums):
         self.root = self.build(nums, 0, len(nums) - 1)
     
     def build(self, nums, start, end):
         if start > end: return None
-        if start == end:
-            return TreeNode(start, end, nums[start])
+        root = self.TreeNode(start, end, 0)
         
-        node = TreeNode(start, end, 0)
-        mid = start + (end - start) // 2
-        node.left = self.build(nums, start, mid)
-        node.right = self.build(nums, mid + 1, end)
-
-        self.update_sum(node)
-        return node
+        if start == end:
+            root.val = nums[start]
+            return root
+        
+        mid = (start + end) // 2
+        root.left = self.build(nums, start, mid)
+        root.right = self.build(nums, mid + 1, end)
+        root.val = root.left.val + root.right.val
+        return root
     
-    def update_sum(self, node):
-        node.sum = 0
-        if node.left:
-            node.sum += node.left.sum
-        if node.right:
-            node.sum += node.right.sum
+    def query(self, start, end, root=None):
+        if root is None:
+            root = self.root
+        
+        if root.start >= start and root.end <= end:
+            return root.val
+        if root.start > end or root.end < start:
+            return 0
+        return self.query(start, end, root.left) + self.query(start, end, root.right)
     
-    def query(self, root, start, end):
-        if root.start == start and root.end == end:
-            return root.sum
-        mid = root.start + (root.end - root.start) // 2
-        if mid < start:
-            return self.query(root.right, start, end)
-        if mid >= end:
-            return self.query(root.left, start, end)
-        if start <= mid < end:
-            return self.query(root.left, start, mid) + self.query(root.right, mid + 1, end)
-        return 0
-    
-    def update(self, root, index, val):
-        if not root.start <= index <= root.end: return
+    def update(self, index, val, root=None):
+        if root is None:
+            root = self.root
+        
         if root.start == index and root.end == index:
-            root.sum = val
+            root.val = val
             return
         
-        mid = root.start + (root.end - root.start) // 2
+        mid = (root.start + root.end) // 2
         if mid < index:
-            self.update(root.right, index, val)
+            self.update(index, val, root.right)
         else:
-            self.update(root.left, index, val)
-        self.update_sum(root)
-        return
-        
-class Solution:
-    def __init__(self, nums):
-        self.st = SegmentTree(nums)
-            
-    def query(self, start, end):
-        return self.st.query(self.st.root, start, end)
+            self.update(index, val, root.left)
+        root.val = root.left.val + root.right.val
 
+class Solution:
+    """
+    @param: A: An integer array
+    """
+    def __init__(self, A):
+        self.st = SegmentTree(A)
+
+    """
+    @param: start: An integer
+    @param: end: An integer
+    @return: The sum from start to end
+    """
+    def query(self, start, end):
+        # write your code here
+        return self.st.query(start, end)
+
+    """
+    @param: index: An integer
+    @param: value: An integer
+    @return: nothing
+    """
     def modify(self, index, value):
-        self.st.update(self.st.root, index, value)
+        # write your code here
+        self.st.update(index, value)

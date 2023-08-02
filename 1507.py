@@ -101,86 +101,88 @@ class Solution:
 线段树
 O(nlogn)
 ###
+from typing import (
+    List,
+)
 class SegmentTree:
     class TreeNode:
         def __init__(self, start, end, val):
             self.start, self.end = start, end
             self.left, self.right = None, None
             self.val = val
-
-    def __init__(self, start, end):
-        self.root = self.build(start, end)
-
+    
+    def __init__(self, length):
+        self.root = self.build(0, length - 1)
+    
     def build(self, start, end):
-        if start == end:
-            return SegmentTree.TreeNode(start, end, float('-inf'))
-        
-        root = SegmentTree.TreeNode(start, end, float('-inf'))
+        if start > end: return None
+        root = self.TreeNode(start, end, -1)
+        if start == end: return root
+
         mid = (start + end) // 2
         root.left = self.build(start, mid)
         root.right = self.build(mid + 1, end)
         return root
     
-    def update_node_val(self, root):
-        root.val = float('-inf')
-        if root.left:
-            root.val = max(root.val, root.left.val)
-        if root.right:
-            root.val = max(root.val, root.right.val)
-    
-    def query(self, root, start, end):
-        if root.start == start and root.end == end:
+    def query(self, start, end, root=None):
+        if root is None:
+            root = self.root
+        if root.start >= start and root.end <= end:
             return root.val
-        
-        mid = (root.start + root.end) // 2
-        if mid < start:
-            return self.query(root.right, start, end)
-        elif mid >= end:
-            return self.query(root.left, start, end)
-        return max(self.query(root.left, start, mid), self.query(root.right, mid + 1, end))
+        if root.start > end or root.end < start:
+            return -1
+        return max(self.query(start, end, root.left), self.query(start, end, root.right))
     
-    def update(self, root, index, val):
-        if root.start == index and root.end == index:
+    def update(self, index, val, root=None):
+        if root is None: root = self.root
+
+        if root.start == root.end:
             root.val = val
             return
         
         mid = (root.start + root.end) // 2
         if mid < index:
-            self.update(root.right, index, val)
+            self.update(index, val, root.right)
         else:
-            self.update(root.left, index, val)
-        self.update_node_val(root)
-        return      
-
-class Solution:
-    def shortest_subarray(self, nums: List[int], k: int) -> int:
-        prefix_sum = self.get_prefix_sum(nums)
-        sum_to_index = self.get_discrete_sum_to_index(prefix_sum, k)
-        st = SegmentTree(0, len(sum_to_index) - 1)
-        min_length = float('inf')
-
-        for end, sum in enumerate(prefix_sum):
-            st.update(st.root, sum_to_index[sum], end)
-            start = st.query(st.root, st.root.start, sum_to_index[sum - k])
-            if start != float('-inf'):
-                min_length = min(min_length, end - start)
+            self.update(index, val, root.left)
+        root.val = max(root.left.val, root.right.val)
         
+class Solution:
+    """
+    @param a: the array
+    @param k: sum
+    @return: the length
+    """
+    def shortest_subarray(self, nums: List[int], k: int) -> int:
+        if not nums: return -1
+
+        prefix_sum, discrete_val_to_index = self.get_info(nums, k)
+        st = SegmentTree(len(discrete_val_to_index))
+        min_length = float('inf')
+        st.update(discrete_val_to_index[0], 0)
+
+        for i in range(1, len(prefix_sum)):
+            curt_sum = prefix_sum[i]
+            target_index = st.query(0, discrete_val_to_index[curt_sum - k])
+            if target_index != -1 and i > target_index:
+                min_length = min(min_length, i - target_index)
+            st.update(discrete_val_to_index[curt_sum], i)
         return min_length if min_length != float('inf') else -1
     
-    def get_prefix_sum(self, nums):
+    def get_info(self, nums, k):
         prefix_sum = [0]
+        discrete_val_set = set([0])
         for val in nums:
-            prefix_sum.append(prefix_sum[-1] + val)
-        return prefix_sum
-    
-    def get_discrete_sum_to_index(self, nums, k):
-        nums_set = set()
-        for val in nums:
-            nums_set.add(val)
-            nums_set.add(val - k)
+            curt = val + prefix_sum[-1]
+            prefix_sum.append(curt)
+            discrete_val_set.add(curt)
+            discrete_val_set.add(curt - k)
         
-        sum_to_index = {}
-        for i, val in enumerate(sorted(list(nums_set))):
-            sum_to_index[val] = i
-        return sum_to_index   
+        discrete_val_to_index = {val: i for i, val in enumerate(sorted(list(discrete_val_set)))}
+        return (prefix_sum, discrete_val_to_index)
+
+
+
+
+        
 
