@@ -10,21 +10,15 @@ class Solution:
     @return: return an integer, denote the minimum length of continuous subarrays whose sum equals to k
     """
     def subarray_sum_equals_k_i_i(self, nums: List[int], k: int) -> int:
+        # write your code here
         if not nums: return -1
-        prefix_sum = [0]
-        for val in nums:
-            prefix_sum.append(prefix_sum[-1] + val)
-
-        val_to_recent_index = {0: 0}
+        sum_to_last_index = {0: 0}
+        prefix_sum = 0
         min_length = float('inf')
-        for i in range(1, len(prefix_sum)):
-            target = prefix_sum[i] - k
-            if target in val_to_recent_index:
-                min_length = min(min_length, i - val_to_recent_index[target])
-            val_to_recent_index[prefix_sum[i]] = i
-        
-        return min_length if min_length != float('inf') else -1
 
-        
-        
-        
+        for end in range(1, len(nums) + 1):
+            prefix_sum += nums[end - 1]
+            if (target := prefix_sum - k) in sum_to_last_index:
+                min_length = min(min_length, end - sum_to_last_index[target])
+            sum_to_last_index[prefix_sum] = end
+        return min_length if min_length != float('inf') else -1             
